@@ -251,7 +251,7 @@ class BawStartService(BaseNode):
                 except Exception as e:
                     raise NodeError(f"params is not valid JSON: {e}")
 
-        url = (f"{base}/rest/bpm/wle/v1/serviceModel/"
+        url = (f"{base}/rest/bpm/wle/v1/service/"
                f"{urllib.parse.quote(service, safe='@')}")
         query = {"parts": "all", "createTask": "false","action":"start"}
         if params_json is not None:
@@ -274,7 +274,7 @@ class BawGetService(BaseNode):
         instance = str(inputs["instance_id"]).strip()
         if not instance:
             raise NodeError("instance_id is required")
-        url = (f"{base}/rest/bpm/wle/v1/service/"
+        url = (f"{base}/rest/bpm/wle/v1/serviceModel/"
                f"{urllib.parse.quote(instance, safe='')}")
         parts = str(inputs.get("parts") or "all").strip()
         query = {"parts": parts} if parts else None
