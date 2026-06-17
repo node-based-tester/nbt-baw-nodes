@@ -1,6 +1,6 @@
 {
   "name": "baw",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "IBM Business Automation Workflow (BAW) nodes: start a service via the REST API.",
   "author": "NBT",
   "requirements": ["requests>=2.31"]
