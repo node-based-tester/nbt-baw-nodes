@@ -167,11 +167,11 @@ class BawServiceDoc(BaseNode):
         model = _as_model(inputs["model"])
         header = model['header']
         dataModel=model['dataModel']
-        name = str(model.get("name") or model.get("serviceName") or "Service")
-        description = str(model.get("description") or "")
-        inputs_list = model.get("inputs") or []
-        outputs_list = model.get("outputs") or []
-        descs = _desc_map(model.get("dataModel"))
+        name = header['name']
+        description =  header['description'] 
+        inputs_list = dataModel.get("inputs") or []
+        outputs_list = dataModel.get("outputs") or []
+        descs = _desc_map(dataModel.get("properties"))
         test_name = str(inputs.get("test_name") or "")
 
         def desc_of(v):
