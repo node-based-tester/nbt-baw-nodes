@@ -120,28 +120,37 @@ def _var_type(v):
             if isinstance(v, dict) else None)
 
 
-def _sample_value(v):
-    """A representative sample value for a variable, based on its type."""
-    if isinstance(v, dict) and v.get("isList"):
-        return []
-    t = (_var_type(v) or "").lower()
-    if t in ("string", "namevaluepair", "text", "xmldocument"):
+def _sample_value(type_name,data):
+    if not type_name:
         return ""
-    if t in ("integer", "long", "decimal", "double", "float", "number"):
+    t_lo= type_name.lower()
+    if t_lo=="string":
+        return ""
+    if t_lo in {"integer","decimal"}:
         return 0
-    if t == "boolean":
+    if t_lo in {"bool","boolean"}:
         return False
-    if t in ("date", "time", "datetime", "timestamp"):
-        return ""
-    return None  # complex / unknown type
+    if t_lo in {"date","datetime","time"}:
+        return "12-01-1999"
+    validation = data.get("validation",{})
+    type_obj = validation.get(type_name)
+    if type_obj and isinstance(type_obj,dict):
+        properties = type_obj.get("properties",{})
+        if properties:
+            result={}
+            for prop,prop_obj in properties.items():
+                class_name = prop_obj.get("className")
+                result[prop]= _sample_value(class_name,data)
+            return result
+    return ""
 
 
-def _sample_json(variables):
+def _sample_json(variables,data):
     out = {}
     for v in variables or []:
         name = _var_name(v)
         if name:
-            out[name] = _sample_value(v)
+            out[name] = _sample_value(variables[name]['className'],data)
     return out
 
 
@@ -156,6 +165,8 @@ class BawServiceDoc(BaseNode):
 
     def run(self, inputs, ctx):
         model = _as_model(inputs["model"])
+        header = model['header']
+        dataModel=model['dataModel']
         name = str(model.get("name") or model.get("serviceName") or "Service")
         description = str(model.get("description") or "")
         inputs_list = model.get("inputs") or []
@@ -175,37 +186,37 @@ class BawServiceDoc(BaseNode):
             cells = []
             for v in vars_:
                 cells.append(
-                    f"<tr><td>{html.escape(str(_var_name(v) or ''))}</td>"
-                    f"<td>{html.escape(str(desc_of(v) or ''))}</td></tr>")
+                    f"<tr><td>{str(_var_name(v) or '')}</td>"
+                    f"<td>{str(desc_of(v) or '')}</td></tr>")
             return "".join(cells)
 
-        sample_in = json.dumps(_sample_json(inputs_list), indent=2)
-        sample_out = json.dumps(_sample_json(outputs_list), indent=2)
+        sample_in = json.dumps(_sample_json(inputs_list,dataModel), indent=2)
+        sample_out = json.dumps(_sample_json(outputs_list,dataModel), indent=2)
 
         doc = (
             "<div>\n"
-            f"  <h2>{html.escape(name)}</h2>\n"
-            f"  <div>{html.escape(description)}</div>\n"
+            f"  <h2>{name}</h2>\n"
+            f"  <div>{description}</div>\n"
             "  <h3>Inputs</h3>\n"
             "  <table>\n"
-            "    <thead><tr><td>Variable Name</td><td>Description</td></tr>"
+            "    <thead><tr><td><b>Variable Name</b></td><td><b>Description</b></td></tr>"
             "</thead>\n"
             f"    <tbody>{rows(inputs_list)}</tbody>\n"
             "  </table>\n"
             "  <h3>Outputs</h3>\n"
             "  <table>\n"
-            "    <thead><tr><td>Variable Name</td><td>Description</td></tr>"
+            "    <thead><tr><td><b>Variable Name</b></td><td><b>Description</b></td></tr>"
             "</thead>\n"
             f"    <tbody>{rows(outputs_list)}</tbody>\n"
             "  </table>\n"
             "  <h3>Test</h3>\n"
             "  <table>\n"
-            "    <thead><tr><td>Test Service Name</td><td>Input JSON</td>"
-            "<td>Output JSON</td></tr></thead>\n"
+            "    <thead><tr><td><b>Test Service Name</b></td><td><b>Input JSON</b></td>"
+            "<td><b>Output JSON</b></td></tr></thead>\n"
             "    <tbody><tr>"
-            f"<td>{html.escape(test_name)}</td>"
-            f"<td><pre>{html.escape(sample_in)}</pre></td>"
-            f"<td><pre>{html.escape(sample_out)}</pre></td>"
+            f"<td>{test_name}</td>"
+            f"<td><pre>{sample_in}</pre></td>"
+            f"<td><pre>{sample_out}</pre></td>"
             "</tr></tbody>\n"
             "  </table>\n"
             "</div>"
